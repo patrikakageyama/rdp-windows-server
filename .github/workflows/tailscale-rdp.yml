@@ -49,7 +49,7 @@ jobs:
         $env:PATH = "$env:PATH;C:\Program Files\Tailscale"
         
         # Connect to Tailscale network
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey $env:TAILSCALE_AUTH_TOKEN --hostname "github-rdp-$(Get-Date -Format 'yyyyMMdd-HHmmss')" --accept-routes
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey $env:TAILSCALE_AUTH_TOKEN --hostname "rdp-${{ github.run_id }}" --accept-routes
         
         Write-Host "Tailscale connection established"
       shell: powershell
