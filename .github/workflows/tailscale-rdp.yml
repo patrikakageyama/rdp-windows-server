@@ -116,58 +116,39 @@ jobs:
                 $extDir = "C:\proxy_extension"
                 New-Item -ItemType Directory -Force -Path $extDir | Out-Null
                 
-                $manifestJson = @'
-{
-    "version": "1.0.0",
-    "manifest_version": 2,
-    "name": "Chrome Proxy",
-    "permissions": [
-        "proxy",
-        "tabs",
-        "unlimitedStorage",
-        "storage",
-        "<all_urls>",
-        "webRequest",
-        "webRequestBlocking"
-    ],
-    "background": {
-        "scripts": ["background.js"]
-    },
-    "minimum_chrome_version":"22.0.0"
-}
-'@
+                $manifestJson = '{"version":"1.0.0","manifest_version":2,"name":"Chrome Proxy","permissions":["proxy","tabs","unlimitedStorage","storage","<all_urls>","webRequest","webRequestBlocking"],"background":{"scripts":["background.js"]},"minimum_chrome_version":"22.0.0"}'
                 $manifestJson | Out-File -FilePath "$extDir\manifest.json" -Encoding ascii -Force
                 
-                $backgroundJs = @"
-var config = {
-    mode: "fixed_servers",
-    rules: {
-        singleProxy: {
-            scheme: "http",
-            host: "$proxyHost",
-            port: parseInt($proxyPort)
-        },
-        bypassList: ["localhost"]
-    }
-};
-
-chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
-
-function callbackFn(details) {
-    return {
-        authCredentials: {
-            username: "$proxyUser",
-            password: "$proxyPass"
-        }
-    };
-}
-
-chrome.webRequest.onAuthRequired.addListener(
-    callbackFn,
-    {urls: ["<all_urls>"]},
-    ['blocking']
-);
-"@
+                $backgroundJs = @(
+                    "var config = {",
+                    "    mode: `\"fixed_servers`\",",
+                    "    rules: {",
+                    "        singleProxy: {",
+                    "            scheme: `\"http`\",",
+                    "            host: `\"$proxyHost`\",",
+                    "            port: parseInt($proxyPort)",
+                    "        },",
+                    "        bypassList: [`\"localhost`\"]",
+                    "    }",
+                    "};",
+                    "",
+                    "chrome.proxy.settings.set({value: config, scope: `\"regular`\"}, function() {});",
+                    "",
+                    "function callbackFn(details) {",
+                    "    return {",
+                    "        authCredentials: {",
+                    "            username: `\"$proxyUser`\",",
+                    "            password: `\"$proxyPass`\"",
+                    "        }",
+                    "    };",
+                    "}",
+                    "",
+                    "chrome.webRequest.onAuthRequired.addListener(",
+                    "    callbackFn,",
+                    "    {urls: [`\"<all_urls>`\"]},",
+                    "    [`\"blocking`\"]",
+                    ");"
+                ) -join "`r`n"
                 $backgroundJs | Out-File -FilePath "$extDir\background.js" -Encoding ascii -Force
                 
                 $chromeArgs += "--load-extension=$extDir"
