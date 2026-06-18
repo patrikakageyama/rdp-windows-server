@@ -98,9 +98,14 @@ jobs:
         
         # Prevent GitHub Actions runner from killing Chrome after this step completes
         $env:RUNNER_TRACKING_ID = $null
-        Start-Process -FilePath $chromePath -ArgumentList "--remote-debugging-port=9222 --remote-debugging-address=0.0.0.0 --remote-allow-origins=* --no-first-run --no-default-browser-check --no-sandbox --user-data-dir=C:\chrome_dev_profile" -RedirectStandardOutput "C:\chrome_stdout.log" -RedirectStandardError "C:\chrome_stderr.log"
+        Start-Process -FilePath $chromePath -ArgumentList "--remote-debugging-port=9222 --remote-debugging-address=127.0.0.1 --no-first-run --no-default-browser-check --no-sandbox --user-data-dir=C:\chrome_dev_profile" -RedirectStandardOutput "C:\chrome_stdout.log" -RedirectStandardError "C:\chrome_stderr.log"
         
-        Write-Host "Chrome started on port 9222"
+        Write-Host "Chrome started on localhost:9222"
+        
+        Write-Host "Setting up Tailscale port forward for CDP..."
+        $env:PATH = "$env:PATH;C:\Program Files\Tailscale"
+        & "C:\Program Files\Tailscale\tailscale.exe" serve --tcp 9222 tcp://localhost:9222
+        Write-Host "Tailscale port forward configured"
       shell: powershell
 
     - name: Get Tailscale IP and Display Connection Info
@@ -167,6 +172,8 @@ jobs:
         Write-Host "=== Tailscale Status ==="
         $env:PATH = "$env:PATH;C:\Program Files\Tailscale"
         & "C:\Program Files\Tailscale\tailscale.exe" status
+        Write-Host "=== Tailscale Serve Status ==="
+        & "C:\Program Files\Tailscale\tailscale.exe" serve status
         
         Write-Host "=== Available Software ==="
         Write-Host "- Google Chrome"
