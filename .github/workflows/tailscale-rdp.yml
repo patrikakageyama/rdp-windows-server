@@ -104,13 +104,38 @@ jobs:
         if ($proxyUrl) {
             Write-Host "Proxy URL provided: $proxyUrl"
             $cleanUrl = $proxyUrl -replace "http://", "" -replace "https://", ""
-            $parts = $cleanUrl.Split(":")
-            if ($parts.Length -eq 4) {
-                $proxyHost = $parts[0]
-                $proxyPort = $parts[1]
-                $proxyUser = $parts[2]
-                $proxyPass = $parts[3]
+            
+            $proxyHost = ""
+            $proxyPort = ""
+            $proxyUser = ""
+            $proxyPass = ""
+            
+            if ($cleanUrl -like "*@*") {
+                $parts = $cleanUrl.Split("@")
+                $authPart = $parts[0]
+                $serverPart = $parts[1]
                 
+                $authParts = $authPart.Split(":")
+                $proxyUser = $authParts[0]
+                $proxyPass = $authParts[1]
+                
+                $serverParts = $serverPart.Split(":")
+                $proxyHost = $serverParts[0]
+                $proxyPort = $serverParts[1]
+            } else {
+                $parts = $cleanUrl.Split(":")
+                if ($parts.Length -eq 4) {
+                    $proxyHost = $parts[0]
+                    $proxyPort = $parts[1]
+                    $proxyUser = $parts[2]
+                    $proxyPass = $parts[3]
+                } elseif ($parts.Length -eq 2) {
+                    $proxyHost = $parts[0]
+                    $proxyPort = $parts[1]
+                }
+            }
+            
+            if ($proxyUser -and $proxyPass) {
                 Write-Host "Configuring authenticated proxy extension: ${proxyHost}:$proxyPort"
                 
                 $extDir = "C:\proxy_extension"
@@ -152,9 +177,9 @@ jobs:
                 $backgroundJs | Out-File -FilePath "$extDir\background.js" -Encoding ascii -Force
                 
                 $chromeArgs += "--load-extension=$extDir"
-            } else {
-                Write-Host "Configuring standard/unauthenticated proxy: $cleanUrl"
-                $chromeArgs += "--proxy-server=$cleanUrl"
+            } elseif ($proxyHost -and $proxyPort) {
+                Write-Host "Configuring standard/unauthenticated proxy: ${proxyHost}:$proxyPort"
+                $chromeArgs += "--proxy-server=${proxyHost}:$proxyPort"
             }
         }
         
