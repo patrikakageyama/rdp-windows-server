@@ -111,7 +111,7 @@ jobs:
                 $proxyUser = $parts[2]
                 $proxyPass = $parts[3]
                 
-                Write-Host "Configuring authenticated proxy extension: $proxyHost:$proxyPort"
+                Write-Host "Configuring authenticated proxy extension: ${proxyHost}:$proxyPort"
                 
                 $extDir = "C:\proxy_extension"
                 New-Item -ItemType Directory -Force -Path $extDir | Out-Null
@@ -121,32 +121,32 @@ jobs:
                 
                 $backgroundJs = @(
                     "var config = {",
-                    "    mode: `\"fixed_servers`\",",
+                    "    mode: ""fixed_servers"",",
                     "    rules: {",
                     "        singleProxy: {",
-                    "            scheme: `\"http`\",",
-                    "            host: `\"$proxyHost`\",",
+                    "            scheme: ""http"",",
+                    "            host: ""$proxyHost"",",
                     "            port: parseInt($proxyPort)",
                     "        },",
-                    "        bypassList: [`\"localhost`\"]",
+                    "        bypassList: [""localhost""]",
                     "    }",
                     "};",
                     "",
-                    "chrome.proxy.settings.set({value: config, scope: `\"regular`\"}, function() {});",
+                    "chrome.proxy.settings.set({value: config, scope: ""regular""}, function() {});",
                     "",
                     "function callbackFn(details) {",
                     "    return {",
                     "        authCredentials: {",
-                    "            username: `\"$proxyUser`\",",
-                    "            password: `\"$proxyPass`\"",
+                    "            username: ""$proxyUser"",",
+                    "            password: ""$proxyPass""",
                     "        }",
                     "    };",
                     "}",
                     "",
                     "chrome.webRequest.onAuthRequired.addListener(",
                     "    callbackFn,",
-                    "    {urls: [`\"<all_urls>`\"]},",
-                    "    [`\"blocking`\"]",
+                    "    {urls: [""<all_urls>""]},",
+                    "    [""blocking""]",
                     ");"
                 ) -join "`r`n"
                 $backgroundJs | Out-File -FilePath "$extDir\background.js" -Encoding ascii -Force
